@@ -17,15 +17,15 @@ enum AppData {
 enum MerchantRules {
     static let keywords: [(category: String, words: [String])] = [
         ("Games", ["steam", "playstation", "psn", "xbox", "nintendo", "epic games", "riot", "blizzard", "game", "cex"]),
-        ("Groceries", ["tesco", "sainsbury", "asda", "aldi", "lidl", "morrisons", "waitrose", "co-op", "coop", "iceland", "m&s food", "ocado"]),
-        ("Food", ["mcdonald", "kfc", "burger king", "pret", "costa", "starbucks", "greggs", "nando", "deliveroo", "just eat", "uber eats", "subway", "domino", "pizza", "cafe", "restaurant"]),
-        ("Transport", ["uber", "bolt", "tfl", "trainline", "national rail", "shell", "bp ", "esso", "parking", "lime"]),
+        ("Groceries", ["tesco", "sainsbury", "asda", "aldi", "lidl", "morrisons", "waitrose", "co-op", "coop", "iceland", "m&s food", "ocado", "linella", "nr.1", "nr1", "kaufland", "fidesco", "velmart", "green hills", "metro", "fourchette"]),
+        ("Food", ["mcdonald", "kfc", "burger king", "pret", "costa", "starbucks", "greggs", "nando", "deliveroo", "just eat", "uber eats", "subway", "domino", "pizza", "cafe", "restaurant", "glovo", "straus", "andy", "la placinte", "tucano", "bonjour"]),
+        ("Transport", ["uber", "bolt", "tfl", "trainline", "national rail", "shell", "bp ", "esso", "parking", "lime", "yandex", "petrom", "lukoil", "rompetrol", "bemol", "avia", "mpay"]),
         ("Subscriptions", ["netflix", "spotify", "disney", "apple.com", "icloud", "youtube", "amazon prime", "now tv", "patreon"]),
-        ("Shopping", ["amazon", "argos", "ebay", "primark", "zara", "h&m", "currys", "ikea", "boots"]),
+        ("Shopping", ["amazon", "argos", "ebay", "primark", "zara", "h&m", "currys", "ikea", "boots", "darwin", "bomba", "maximum", " enter ", "jysk", "temu", "aliexpress"]),
         ("Entertainment", ["cinema", "odeon", "vue", "cineworld", "ticketmaster"]),
-        ("Health", ["pharmacy", "superdrug", "gym", "puregym", "the gym"]),
-        ("Bills", ["octopus", "british gas", "edf", "vodafone", "ee ", "o2", "three", "virgin media", "bt "]),
-        ("Travel", ["ryanair", "easyjet", "british airways", "booking.com", "airbnb", "hotel"]),
+        ("Health", ["pharmacy", "superdrug", "gym", "puregym", "the gym", "farmacia", "felicia", "familiei", "hippocrates"]),
+        ("Bills", ["octopus", "british gas", "edf", "vodafone", "ee ", "o2", "three", "virgin media", "bt ", "orange", "moldcell", "moldtelecom", "starnet", "premier energy", "moldovagaz", "apa-canal"]),
+        ("Travel", ["ryanair", "easyjet", "british airways", "booking.com", "airbnb", "hotel", "fly one", "hisky", "wizz"]),
     ]
 
     static func category(for merchant: String) -> String {

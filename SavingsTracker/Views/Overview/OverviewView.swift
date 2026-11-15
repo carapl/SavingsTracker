@@ -9,6 +9,7 @@ struct OverviewView: View {
     @Query(sort: \Tracker.createdAt) private var trackers: [Tracker]
 
     @State private var showingNewEntry = false
+    @State private var showingSettings = false
 
     private var thisMonth: [LedgerEntry] {
         entries.filter { Calendar.current.isDate($0.date, equalTo: .now, toGranularity: .month) }
@@ -71,10 +72,17 @@ struct OverviewView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Overview")
             .toolbar {
-                Button { showingNewEntry = true } label: { Image(systemName: "plus") }
-                    .accessibilityLabel("Add transaction")
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showingSettings = true } label: { Image(systemName: "gearshape") }
+                        .accessibilityLabel("Settings")
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showingNewEntry = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add transaction")
+                }
             }
             .sheet(isPresented: $showingNewEntry) { EntryForm() }
+            .sheet(isPresented: $showingSettings) { SettingsView() }
         }
     }
 }

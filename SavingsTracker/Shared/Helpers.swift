@@ -1,8 +1,22 @@
 import SwiftUI
 
 enum Money {
-    static var code: String { Locale.current.currency?.identifier ?? "USD" }
-    static var symbol: String { Locale.current.currencySymbol ?? "$" }
+    static let codeKey = "currencyCode"
+    static let defaultCode = "MDL"
+
+    /// Currency chosen in Settings (defaults to Moldovan leu), independent of the phone's region.
+    static var code: String { UserDefaults.standard.string(forKey: codeKey) ?? defaultCode }
+
+    static var symbol: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = code
+        return formatter.currencySymbol ?? code
+    }
+
+    static func name(for code: String) -> String {
+        Locale.current.localizedString(forCurrencyCode: code) ?? code
+    }
 
     /// Parses what the user typed into a Decimal, honouring their locale's separators.
     static func parse(_ text: String) -> Decimal? {

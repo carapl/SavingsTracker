@@ -14,6 +14,9 @@ struct SavingsTrackerApp: App {
 }
 
 struct ContentView: View {
+    // Rebuild every screen when the currency changes so all amounts redraw.
+    @AppStorage(Money.codeKey) private var currency = Money.defaultCode
+
     var body: some View {
         TabView {
             Tab("Overview", systemImage: "chart.pie") { OverviewView() }
@@ -22,5 +25,6 @@ struct ContentView: View {
             Tab("Trackers", systemImage: "square.grid.2x2") { TrackersView() }
             Tab("Accounts", systemImage: "building.columns") { AccountsView() }
         }
+        .id(currency)
     }
 }
