@@ -65,6 +65,8 @@ final class LedgerEntry {
     var category: String = "Other"
     var note: String = ""
     var date: Date = Date()
+    /// True when saved by the Shortcuts automation rather than typed in.
+    var isAutoLogged: Bool = false
     var account: Account?
     var tracker: Tracker?
 

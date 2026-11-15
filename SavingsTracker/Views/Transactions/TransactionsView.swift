@@ -100,6 +100,10 @@ struct EntryRow: View {
                 Text(entry.note.isEmpty ? entry.category : entry.note)
                     .lineLimit(1)
                 HStack(spacing: 4) {
+                    if entry.isAutoLogged {
+                        Image(systemName: "bolt.fill").foregroundStyle(.orange)
+                            .accessibilityLabel("Logged automatically")
+                    }
                     if !entry.note.isEmpty { Text(entry.category) }
                     if let tracker = entry.tracker { Text("· \(tracker.emoji) \(tracker.name)") }
                     if showDate { Text("· \(entry.date.formatted(.dateTime.day().month()))") }

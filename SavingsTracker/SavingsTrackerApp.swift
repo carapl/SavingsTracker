@@ -9,7 +9,7 @@ struct SavingsTrackerApp: App {
         }
         // The default configuration syncs through CloudKit automatically
         // once the iCloud capability is added to the target.
-        .modelContainer(for: [Account.self, LedgerEntry.self, Tracker.self, SavingsGoal.self, GoalDeposit.self])
+        .modelContainer(AppData.container)
     }
 }
 
