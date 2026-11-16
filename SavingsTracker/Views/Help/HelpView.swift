@@ -431,7 +431,7 @@ private struct TabsDemo: View {
 }
 
 private struct AddTransactionDemo: View {
-    /// One step at a time: tap +, the form slides up, 45 is filled in, tap Save,
+    /// One step at a time: tap +, the form slides up, 45 pops in, tap Save,
     /// the form slides away, and only then the new row appears.
     enum Step: CaseIterable { case list, tapPlus, sheet, typed, tapSave, closed, saved }
 
@@ -443,7 +443,7 @@ private struct AddTransactionDemo: View {
             case .list: .easeInOut(duration: 0.3).delay(1.4)
             case .tapPlus, .tapSave: .easeOut(duration: 0.15).delay(0.45)
             case .sheet, .closed: .timingCurve(0.3, 0, 0.2, 1, duration: 0.45).delay(0.25)
-            case .typed: .linear(duration: 0.05).delay(0.5)
+            case .typed: .spring(duration: 0.4, bounce: 0.35).delay(0.5)
             case .saved: .spring(duration: 0.45, bounce: 0.15).delay(0.15)
             }
         }) { step in
@@ -478,13 +478,21 @@ private struct AddTransactionDemo: View {
                         HStack {
                             Text("Amount")
                             Spacer()
-                            // Not animated: 45 appears instantly in place, but it still slides in and out with the form.
-                            let typed = step == .sheet ? "0" : "45"
-                            Text(typed)
-                                .font(.title3.bold().monospacedDigit())
-                                .foregroundStyle(step == .sheet ? .secondary : .primary)
-                                .contentTransition(.identity)
-                                .animation(nil, value: typed)
+                            // 0 fades out and 45 pops in on the same spot (both pinned to the right),
+                            // so the number never slides sideways.
+                            ZStack(alignment: .trailing) {
+                                if step == .sheet {
+                                    Text("0").foregroundStyle(.secondary)
+                                        .transition(.opacity)
+                                } else {
+                                    Text("45")
+                                        .transition(.asymmetric(
+                                            insertion: .scale(scale: 0.5, anchor: .trailing).combined(with: .opacity),
+                                            removal: .opacity))
+                                }
+                            }
+                            .font(.title3.bold().monospacedDigit())
+                            .frame(width: 60, alignment: .trailing)
                         }
                         .padding(10).background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
                         HStack {
