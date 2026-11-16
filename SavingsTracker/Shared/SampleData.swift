@@ -1,15 +1,28 @@
-#if DEBUG
 import Foundation
 import SwiftData
 
-/// Fills an empty database with realistic demo data when launched with `-sampleData`.
-/// Debug builds only; used for the simulator and README screenshots.
+/// Realistic demo data for an empty database. Debug builds insert it when launched with
+/// `-sampleData` (simulator and README screenshots); it can also be loaded from the advanced tools.
 enum SampleData {
+    #if DEBUG
     @MainActor
     static func insertIfRequested() {
         guard ProcessInfo.processInfo.arguments.contains("-sampleData") else { return }
+        insertIfEmpty()
+    }
+    #endif
+
+    @MainActor
+    static var isDatabaseEmpty: Bool {
         let context = AppData.container.mainContext
-        guard (try? context.fetchCount(FetchDescriptor<LedgerEntry>())) == 0 else { return }
+        return (try? context.fetchCount(FetchDescriptor<LedgerEntry>())) == 0
+            && (try? context.fetchCount(FetchDescriptor<Account>())) == 0
+    }
+
+    @MainActor
+    static func insertIfEmpty() {
+        guard isDatabaseEmpty else { return }
+        let context = AppData.container.mainContext
 
         let cal = Calendar.current
         func day(_ monthsAgo: Int, _ day: Int) -> Date {
@@ -72,6 +85,12 @@ enum SampleData {
         }
 
         try? context.save()
+
+        let store = UserDefaults.standard
+        store.set("Alex", forKey: Profile.nameKey)
+        store.set(18_500.0, forKey: Profile.incomeKey)
+        store.set(5, forKey: Profile.paydayKey)
+        store.set(20, forKey: Profile.savingsPercentKey)
+        store.set("Food,Games", forKey: Profile.watchedKey)
     }
 }
-#endif

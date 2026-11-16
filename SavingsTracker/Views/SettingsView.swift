@@ -9,6 +9,16 @@ struct SettingsView: View {
     @AppStorage(Theme.appearanceKey) private var appearance = Theme.Appearance.system
     @AppStorage(Theme.accentKey) private var accent = "default"
     @Query(sort: \Account.createdAt) private var accounts: [Account]
+    @AppStorage(Profile.nameKey) private var name = ""
+    @AppStorage(Profile.incomeKey) private var income = 0.0
+    @AppStorage(Profile.paydayKey) private var payday = 0
+    @AppStorage(Profile.savingsPercentKey) private var savingsPercent = Profile.defaultSavingsPercent
+    @AppStorage(Profile.watchedKey) private var watched = ""
+    @AppStorage(Profile.tipsEnabledKey) private var tipsEnabled = false
+    @AppStorage(Profile.tipsWeekdayKey) private var tipsWeekday = Profile.defaultTipsWeekday
+    @AppStorage(Profile.onboardedKey) private var onboarded = true
+    @State private var incomeText = Profile.monthlyIncome > 0 ? Money.editText(Profile.monthlyIncome) : ""
+    @State private var notificationsBlocked = false
 
     private var defaultAccount: Binding<Account?> {
         Binding(
@@ -61,6 +71,59 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    TextField("Name", text: $name)
+                    AmountField(title: "Monthly income", text: $incomeText)
+                        .onChange(of: incomeText) { _, text in income = (Money.parse(text) ?? 0).double }
+                    Picker("Payday", selection: $payday) {
+                        Text("Varies").tag(0)
+                        ForEach(1...31, id: \.self) { Text("\($0)").tag($0) }
+                    }
+                    Stepper(value: $savingsPercent, in: 5...50, step: 5) {
+                        LabeledContent("Save each month") {
+                            Text(Profile.monthlyIncome > 0 ? "\(savingsPercent)% · \(Profile.plannedSavings.currency)" : "\(savingsPercent)%")
+                                .monospacedDigit()
+                        }
+                    }
+                    NavigationLink {
+                        WatchedCategoriesView(watched: $watched)
+                    } label: {
+                        LabeledContent("Keep an eye on", value: Profile.decodeList(watched).isEmpty ? "None" : Profile.decodeList(watched).joined(separator: ", "))
+                    }
+                } header: {
+                    Text("Your plan")
+                } footer: {
+                    Text("Used for weekly tips and goal suggestions. Stays on this phone.")
+                }
+
+                Section {
+                    Toggle("Weekly reminder", isOn: $tipsEnabled)
+                        .onChange(of: tipsEnabled) { _, on in
+                            guard on else { TipsReminder.cancel(); return }
+                            Task {
+                                if !(await TipsReminder.enable(weekday: tipsWeekday)) {
+                                    tipsEnabled = false
+                                    notificationsBlocked = true
+                                }
+                            }
+                        }
+                    if tipsEnabled {
+                        Picker("Day", selection: $tipsWeekday) {
+                            ForEach(1...7, id: \.self) { Text(Calendar.current.weekdaySymbols[$0 - 1]).tag($0) }
+                        }
+                        .onChange(of: tipsWeekday) { _, day in TipsReminder.schedule(weekday: day) }
+                    }
+                    if notificationsBlocked {
+                        Button("Allow notifications in iPhone Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                        }
+                    }
+                } header: {
+                    Text("Weekly tips")
+                } footer: {
+                    Text("A reminder at \(Profile.tipsHour):00 on the day you pick. Tips are always on Overview too.")
+                }
+
                 Section("Appearance") {
                     Picker("Theme", selection: $appearance) {
                         ForEach(Theme.Appearance.allCases) { Label($0.label, systemImage: $0.symbol).tag($0) }
@@ -155,12 +218,23 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Button {
+                        dismiss()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { onboarded = false }
+                    } label: {
+                        Label("Show Intro Again", systemImage: "sparkles")
+                    }
+                }
+
+                Section {
                     Button { choosingFile = true } label: {
                         Label("Restore from Backup…", systemImage: "arrow.counterclockwise")
                     }
                 } footer: {
                     Text("Restoring replaces everything currently in the app with the backup's contents.")
                 }
+
+                AdvancedToggleSection(closeSettings: { dismiss() })
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -205,5 +279,35 @@ struct SettingsView: View {
         } catch {
             exportError = "Couldn't prepare export: \(error.localizedDescription)"
         }
+    }
+}
+
+/// Multi-select list of the categories weekly tips should report on.
+private struct WatchedCategoriesView: View {
+    @Binding var watched: String
+
+    var body: some View {
+        let selected = Set(Profile.decodeList(watched))
+        List {
+            Section {
+                ForEach(Categories.expense.map(\.name).filter { $0 != "Other" }, id: \.self) { name in
+                    Button {
+                        var next = selected
+                        if next.contains(name) { next.remove(name) } else { next.insert(name) }
+                        watched = Profile.encodeList(Categories.expense.map(\.name).filter(next.contains))
+                    } label: {
+                        HStack {
+                            Label(name, systemImage: Categories.symbol(for: name)).foregroundStyle(.primary)
+                            Spacer()
+                            if selected.contains(name) { Image(systemName: "checkmark").foregroundStyle(.tint) }
+                        }
+                    }
+                }
+            } footer: {
+                Text("Weekly tips tell you how these are going compared with last month.")
+            }
+        }
+        .navigationTitle("Keep an Eye On")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

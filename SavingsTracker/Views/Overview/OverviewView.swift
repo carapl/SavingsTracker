@@ -34,6 +34,10 @@ struct OverviewView: View {
                         .reveal(0)
                     }
 
+                    if !entries.isEmpty {
+                        TipsCard(entries: entries, goals: goals, trackers: trackers).card().reveal(1)
+                    }
+
                     VStack(alignment: .leading, spacing: 12) {
                         Text(Date.now, format: .dateTime.month(.wide)).font(.headline)
                         HStack {
@@ -43,10 +47,10 @@ struct OverviewView: View {
                         }
                     }
                     .card()
-                    .reveal(1)
+                    .reveal(2)
 
-                    MonthlyChart(entries: entries).card().reveal(2)
-                    CategoryChart(entries: thisMonth.filter { $0.kind == .expense }).card().reveal(3)
+                    MonthlyChart(entries: entries).card().reveal(3)
+                    CategoryChart(entries: thisMonth.filter { $0.kind == .expense }).card().reveal(4)
 
                     if !goals.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
@@ -57,7 +61,7 @@ struct OverviewView: View {
                             }
                         }
                         .card()
-                        .reveal(4)
+                        .reveal(5)
                     }
 
                     if !trackers.isEmpty {
@@ -69,7 +73,7 @@ struct OverviewView: View {
                             }
                         }
                         .card()
-                        .reveal(5)
+                        .reveal(6)
                     }
                 }
                 .padding()

@@ -57,8 +57,17 @@ struct LogExpenseIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        let message = try AutoLogger.log(amount: amount, merchant: merchant, card: card)
+        return .result(dialog: "\(message)")
+    }
+}
+
+/// Saves an automatic payment. Used by the Shortcuts action and by the in-app test tool.
+enum AutoLogger {
+    @MainActor
+    static func log(amount: Double, merchant: String, card: String?) throws -> String {
         let value = Decimal(abs(amount)).rounded(2)
-        guard value > 0 else { return .result(dialog: "Nothing logged: the amount was zero.") }
+        guard value > 0 else { return "Nothing logged: the amount was zero." }
 
         let context = AppData.container.mainContext
         let place = merchant.trimmingCharacters(in: .whitespaces)
@@ -96,7 +105,7 @@ struct LogExpenseIntent: AppIntent {
                 from += " — card \"\(rawCard)\" isn't linked yet; link it in Settings › Wallet cards"
             }
         }
-        return .result(dialog: "Logged \(value.currency)\(where_) as \(category)\(from).")
+        return "Logged \(value.currency)\(where_) as \(category)\(from)."
     }
 }
 
@@ -168,13 +177,5 @@ struct SavingsShortcuts: AppShortcutsProvider {
             shortTitle: "Log Expense",
             systemImageName: "creditcard"
         )
-    }
-}
-
-private extension Decimal {
-    func rounded(_ places: Int) -> Decimal {
-        var input = self, output = Decimal()
-        NSDecimalRound(&output, &input, places, .plain)
-        return output
     }
 }

@@ -10,6 +10,7 @@ struct BackupFile: Codable {
     var trackers: [TrackerData]
     var goals: [GoalData]
     var entries: [EntryData]
+    var profile: Profile.Data?
 
     struct AccountData: Codable {
         var name: String, kind: String, startingBalance: Decimal, createdAt: Date
@@ -68,7 +69,8 @@ enum Backup {
                       account: entry.account.flatMap { a in accounts.firstIndex { $0 === a } },
                       tracker: entry.tracker.flatMap { t in trackers.firstIndex { $0 === t } },
                       cardName: entry.cardName)
-            }
+            },
+            profile: Profile.snapshot()
         )
 
         let encoder = JSONEncoder()
@@ -164,6 +166,7 @@ enum Backup {
         }
 
         UserDefaults.standard.set(file.currency, forKey: Money.codeKey)
+        if let profile = file.profile { Profile.restore(profile) }
         try context.save()
     }
 }

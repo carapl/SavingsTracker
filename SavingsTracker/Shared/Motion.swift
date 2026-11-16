@@ -2,9 +2,13 @@ import SwiftUI
 
 /// Shared animation timings, so the whole app moves the same way.
 enum Motion {
-    static let entrance = Animation.spring(duration: 0.5, bounce: 0.18)
-    static let change = Animation.snappy(duration: 0.35)
-    static let chart = Animation.spring(duration: 0.8, bounce: 0.12)
+    static let slowKey = "slowAnimations"
+    /// 0.25 when slow animations are switched on (for checking motion), otherwise 1.
+    private static var speed: Double { UserDefaults.standard.bool(forKey: slowKey) ? 0.25 : 1 }
+
+    static var entrance: Animation { .spring(duration: 0.5, bounce: 0.18).speed(speed) }
+    static var change: Animation { .snappy(duration: 0.35).speed(speed) }
+    static var chart: Animation { .spring(duration: 0.8, bounce: 0.12).speed(speed) }
 }
 
 /// Fades and lifts a view into place each time it appears (e.g. switching tabs).

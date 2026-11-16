@@ -3,8 +3,16 @@ import SwiftData
 
 @main
 struct SavingsTrackerApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     init() {
         #if DEBUG
+        // -resetOnboarding shows the intro again; -skipOnboarding or -sampleData hide it (README screenshots).
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-resetOnboarding") { UserDefaults.standard.set(false, forKey: Profile.onboardedKey) }
+        if args.contains("-skipOnboarding") || args.contains("-sampleData") {
+            UserDefaults.standard.set(true, forKey: Profile.onboardedKey)
+        }
         SampleData.insertIfRequested()
         #endif
     }
@@ -26,6 +34,8 @@ struct ContentView: View {
     @AppStorage(Theme.appearanceKey) private var appearance = Theme.Appearance.system
     @State private var tab = ContentView.initialTab
     @State private var showingSettings = false
+    @AppStorage(Profile.onboardedKey) private var onboarded = false
+    @Bindable private var router = TipsRouter.shared
 
     var body: some View {
         TabView(selection: $tab) {
@@ -40,6 +50,16 @@ struct ContentView: View {
         .environment(\.showSettings, { showingSettings = true })
         // Outside the rebuilt tree, so changing currency or accent doesn't close Settings.
         .sheet(isPresented: $showingSettings) { SettingsView() }
+        .sheet(isPresented: $router.showTips) {
+            NavigationStack {
+                WeeklyTipsView().toolbar { Button("Done") { router.showTips = false } }
+            }
+        }
+        .fullScreenCover(isPresented: Binding(get: { !onboarded }, set: { onboarded = !$0 })) {
+            OnboardingView()
+                .tint(Theme.accent(accent))
+                .preferredColorScheme(appearance.colorScheme)
+        }
         .tint(Theme.accent(accent))
         .preferredColorScheme(appearance.colorScheme)
     }

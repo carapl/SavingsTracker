@@ -11,6 +11,8 @@ O aplicație iOS simplă pentru banii tăi: vezi cât intră, cât iese, cât ai
 - **Goals**: obiective de economisire (laptop, vacanță, fond de urgență) cu progres și cât trebuie să pui deoparte lunar ca să ajungi la timp.
 - **Trackers**: secțiuni făcute de tine pentru ce vrei să urmărești, gen 🎮 jocuri sau ☕️ cafea, cu buget lunar opțional.
 - **Accounts**: toate conturile la un loc, cu soldul actualizat din tranzacții.
+- **Sfaturi săptămânale**: în fiecare săptămână vezi cum a mers față de o săptămână obișnuită, ce categorii au sărit, cât poți cheltui pe zi ca să-ți atingi planul de economii și cât trebuie să pui deoparte pentru fiecare obiectiv. Opțional, primești și o notificare.
+- **Intro și plan personal**: la prima pornire, aplicația îți arată ce poate și te ajută să-ți setezi venitul, cât vrei să economisești, primul cont și primul obiectiv.
 - **Backup & export**: backup complet pe care îl poți restaura oricând, plus export CSV pentru Excel / Numbers / Google Sheets.
 
 ## Plăți automate cu Apple Pay
