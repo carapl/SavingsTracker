@@ -32,16 +32,6 @@ După fiecare plată cu Apple Pay, o automatizare din Shortcuts trimite plata î
 
 > Merge doar cu Apple Pay (telefon sau ceas). Cu cardul fizic, automatizarea nu pornește.
 
-## Instalare
-
-Ai nevoie de un Mac cu Xcode și de un iPhone cu iOS 18 sau mai nou.
-
-1. Deschide `SavingsTracker.xcodeproj` în Xcode și loghează-te cu Apple ID-ul tău.
-2. Conectează iPhone-ul, alege-l ca destinație și apasă **⌘R**.
-3. Pe iPhone: **Settings → General → VPN & Device Management → Trust**.
-
-Cu un Apple ID gratuit, aplicația trebuie reinstalată o dată la 7 zile. Datele rămân pe telefon.
-
 ## Tech
 
 SwiftUI · SwiftData · Swift Charts · App Intents. Nu are server, nu are dependențe externe, totul stă pe telefon.
