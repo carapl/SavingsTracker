@@ -3,7 +3,7 @@ import SwiftData
 
 struct GoalsView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \SavingsGoal.createdAt) private var goals: [SavingsGoal]
+    @Query(sort: \SavingsGoal.createdAt, animation: Motion.change) private var goals: [SavingsGoal]
     @State private var showingNew = false
 
     var body: some View {
@@ -15,6 +15,7 @@ struct GoalsView: View {
                             VStack(alignment: .leading) {
                                 Text("Saved toward goals").font(.subheadline).foregroundStyle(.secondary)
                                 Text(goals.sum(\.saved).currency).font(.title2.bold()).monospacedDigit()
+                                    .rollingNumber(goals.sum(\.saved))
                             }
                             Spacer()
                             Text("of \(goals.sum(\.target).currency)").foregroundStyle(.secondary)
@@ -112,6 +113,7 @@ struct GoalDetailView: View {
 
                     VStack(spacing: 4) {
                         Text(goal.saved.currency).font(.title.bold()).monospacedDigit()
+                            .rollingNumber(goal.saved)
                         Text("saved of \(goal.target.currency)").foregroundStyle(.secondary)
                     }
 

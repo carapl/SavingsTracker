@@ -3,7 +3,7 @@ import SwiftData
 
 struct AccountsView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \Account.createdAt) private var accounts: [Account]
+    @Query(sort: \Account.createdAt, animation: Motion.change) private var accounts: [Account]
     @State private var showingNew = false
     @State private var editing: Account?
 
@@ -15,6 +15,7 @@ struct AccountsView: View {
                         VStack(alignment: .leading) {
                             Text("Total balance").font(.subheadline).foregroundStyle(.secondary)
                             Text(accounts.sum(\.balance).currency).font(.title.bold()).monospacedDigit()
+                                .rollingNumber(accounts.sum(\.balance))
                         }
                     }
                 }

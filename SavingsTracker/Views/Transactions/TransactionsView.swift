@@ -3,7 +3,7 @@ import SwiftData
 
 struct TransactionsView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \LedgerEntry.date, order: .reverse) private var entries: [LedgerEntry]
+    @Query(sort: \LedgerEntry.date, order: .reverse, animation: Motion.change) private var entries: [LedgerEntry]
 
     @State private var filter: Filter = .all
     @State private var search = ""

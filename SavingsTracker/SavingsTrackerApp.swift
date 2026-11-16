@@ -30,11 +30,12 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $tab) {
             Tab("Overview", systemImage: "chart.pie", value: 0) { OverviewView() }
-            Tab("Activity", systemImage: "list.bullet", value: 1) { TransactionsView() }
-            Tab("Goals", systemImage: "target", value: 2) { GoalsView() }
-            Tab("Trackers", systemImage: "square.grid.2x2", value: 3) { TrackersView() }
-            Tab("Accounts", systemImage: "building.columns", value: 4) { AccountsView() }
+            Tab("Activity", systemImage: "list.bullet", value: 1) { TransactionsView().reveal() }
+            Tab("Goals", systemImage: "target", value: 2) { GoalsView().reveal() }
+            Tab("Trackers", systemImage: "square.grid.2x2", value: 3) { TrackersView().reveal() }
+            Tab("Accounts", systemImage: "building.columns", value: 4) { AccountsView().reveal() }
         }
+        .sensoryFeedback(.selection, trigger: tab)
         .id(currency + accent)
         .environment(\.showSettings, { showingSettings = true })
         // Outside the rebuilt tree, so changing currency or accent doesn't close Settings.

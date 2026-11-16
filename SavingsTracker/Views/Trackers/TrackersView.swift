@@ -4,7 +4,7 @@ import Charts
 
 struct TrackersView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \Tracker.createdAt) private var trackers: [Tracker]
+    @Query(sort: \Tracker.createdAt, animation: Motion.change) private var trackers: [Tracker]
     @State private var showingNew = false
 
     var body: some View {
@@ -88,6 +88,7 @@ struct TrackerDetailView: View {
                         VStack(alignment: .leading) {
                             Text("This month").font(.subheadline).foregroundStyle(.secondary)
                             Text(month.currency).font(.title.bold()).monospacedDigit()
+                                .rollingNumber(month)
                         }
                     }
                     if let budget = tracker.monthlyBudget, budget > 0 {

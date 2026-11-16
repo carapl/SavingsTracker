@@ -26,10 +26,12 @@ struct OverviewView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Total balance").font(.subheadline).foregroundStyle(.secondary)
                             Text(accounts.sum(\.balance).currency).font(.largeTitle.bold()).monospacedDigit()
+                                .rollingNumber(accounts.sum(\.balance))
                             Text("Across \(accounts.count) account\(accounts.count == 1 ? "" : "s")")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         .card()
+                        .reveal(0)
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -41,19 +43,21 @@ struct OverviewView: View {
                         }
                     }
                     .card()
+                    .reveal(1)
 
-                    MonthlyChart(entries: entries).card()
-                    CategoryChart(entries: thisMonth.filter { $0.kind == .expense }).card()
+                    MonthlyChart(entries: entries).card().reveal(2)
+                    CategoryChart(entries: thisMonth.filter { $0.kind == .expense }).card().reveal(3)
 
                     if !goals.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Goals").font(.headline)
                             ForEach(goals) { goal in
                                 NavigationLink { GoalDetailView(goal: goal) } label: { GoalRow(goal: goal) }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(PressableStyle())
                             }
                         }
                         .card()
+                        .reveal(4)
                     }
 
                     if !trackers.isEmpty {
@@ -61,10 +65,11 @@ struct OverviewView: View {
                             Text("Trackers").font(.headline)
                             ForEach(trackers) { tracker in
                                 NavigationLink { TrackerDetailView(tracker: tracker) } label: { TrackerRow(tracker: tracker) }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(PressableStyle())
                             }
                         }
                         .card()
+                        .reveal(5)
                     }
                 }
                 .padding()
@@ -97,6 +102,7 @@ private struct Stat: View {
             Text(value.currency)
                 .font(.headline).monospacedDigit()
                 .foregroundStyle(color)
+                .rollingNumber(value)
                 .lineLimit(1).minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -105,6 +111,7 @@ private struct Stat: View {
 
 private struct MonthlyChart: View {
     let entries: [LedgerEntry]
+    @State private var grow = 0.0
 
     private struct Point: Identifiable {
         let month: Date
@@ -134,7 +141,7 @@ private struct MonthlyChart: View {
             } else {
                 Chart(points) { point in
                     BarMark(x: .value("Month", point.month, unit: .month),
-                            y: .value("Amount", point.value))
+                            y: .value("Amount", point.value * grow))
                         .foregroundStyle(by: .value("Type", point.series))
                         .position(by: .value("Type", point.series))
                         .cornerRadius(3)
@@ -145,7 +152,9 @@ private struct MonthlyChart: View {
                         AxisValueLabel(format: .dateTime.month(.abbreviated))
                     }
                 }
+                .chartYScale(domain: 0...max(points.map(\.value).max() ?? 0, 1) * 1.05)
                 .frame(height: 200)
+                .modifier(GrowOnAppear(progress: $grow))
             }
         }
     }
@@ -153,6 +162,7 @@ private struct MonthlyChart: View {
 
 private struct CategoryChart: View {
     let entries: [LedgerEntry]
+    @State private var grow = 0.0
 
     private var totals: [(category: String, value: Decimal)] {
         Dictionary(grouping: entries, by: \.category)
@@ -171,12 +181,16 @@ private struct CategoryChart: View {
                 HStack(alignment: .center, spacing: 16) {
                     Chart(totals, id: \.category) { item in
                         SectorMark(angle: .value("Spent", item.value.double),
-                                   innerRadius: .ratio(0.6), angularInset: 1.5)
+                                   innerRadius: .ratio(0.6), outerRadius: .ratio(0.75 + 0.25 * grow),
+                                   angularInset: 1.5)
                             .foregroundStyle(by: .value("Category", item.category))
                             .cornerRadius(3)
                     }
                     .chartLegend(.hidden)
                     .frame(width: 130, height: 130)
+                    .rotationEffect(.degrees(-90 * (1 - grow)))
+                    .opacity(0.3 + 0.7 * grow)
+                    .modifier(GrowOnAppear(progress: $grow))
 
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(totals.prefix(5), id: \.category) { item in
