@@ -6,6 +6,16 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @AppStorage(Money.codeKey) private var currency = Money.defaultCode
+    @Query(sort: \Account.createdAt) private var accounts: [Account]
+
+    private var defaultAccount: Binding<Account?> {
+        Binding(
+            get: { accounts.first { $0.isDefaultForAutoLog } },
+            set: { chosen in
+                for account in accounts { account.isDefaultForAutoLog = (account === chosen) }
+            }
+        )
+    }
 
     @State private var backupURL: URL?
     @State private var csvURL: URL?
@@ -30,6 +40,17 @@ struct SettingsView: View {
                     }
                 } footer: {
                     Text("Changes how amounts are shown. Amounts you already saved keep their numbers; they aren't converted.")
+                }
+
+                Section {
+                    Picker("Default account", selection: defaultAccount) {
+                        Text("None").tag(Account?.none)
+                        ForEach(accounts) { Text($0.name).tag(Optional($0)) }
+                    }
+                } header: {
+                    Text("Automatic payments")
+                } footer: {
+                    Text("Payments go to the account whose name matches the card, like \"MAIB\" for a card called \"MAIB Visa\". If no name matches, they go to this account.")
                 }
 
                 Section {

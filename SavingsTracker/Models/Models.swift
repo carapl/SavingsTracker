@@ -36,6 +36,8 @@ final class Account {
     /// Balance before any transactions linked to this account.
     var startingBalance: Decimal = 0
     var createdAt: Date = Date()
+    /// Receives automatic payments whose card doesn't match any account name.
+    var isDefaultForAutoLog: Bool = false
 
     @Relationship(deleteRule: .nullify, inverse: \LedgerEntry.account)
     var entries: [LedgerEntry]? = []
@@ -67,6 +69,8 @@ final class LedgerEntry {
     var date: Date = Date()
     /// True when saved by the Shortcuts automation rather than typed in.
     var isAutoLogged: Bool = false
+    /// Card name Wallet reported for an automatic entry, kept for checking account matching.
+    var cardName: String = ""
     var account: Account?
     var tracker: Tracker?
 

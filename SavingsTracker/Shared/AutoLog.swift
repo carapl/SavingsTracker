@@ -42,11 +42,11 @@ struct LogExpenseIntent: AppIntent {
     @Parameter(title: "Amount")
     var amount: Double
 
-    @Parameter(title: "Merchant", default: "")
+    @Parameter(title: "Merchant", requestValueDialog: "Where did you pay?")
     var merchant: String
 
-    @Parameter(title: "Card", default: "")
-    var card: String
+    @Parameter(title: "Card")
+    var card: String?
 
     static var parameterSummary: some ParameterSummary {
         Summary("Log \(\.$amount) at \(\.$merchant)") {
@@ -63,19 +63,23 @@ struct LogExpenseIntent: AppIntent {
         let place = merchant.trimmingCharacters(in: .whitespaces)
         let category = MerchantRules.category(for: place)
 
+        let rawCard = (card ?? "").trimmingCharacters(in: .whitespaces)
         let entry = LedgerEntry(amount: value, kind: .expense, category: category, note: place)
         entry.isAutoLogged = true
+        entry.cardName = rawCard
         context.insert(entry)
 
-        // Link to an account whose name matches the card, e.g. card "Monzo" -> account "Monzo".
-        let cardName = card.trimmingCharacters(in: .whitespaces).lowercased()
-        if !cardName.isEmpty {
-            let accounts = try context.fetch(FetchDescriptor<Account>())
-            entry.account = accounts.first {
-                let name = $0.name.lowercased()
-                return !name.isEmpty && (cardName.contains(name) || name.contains(cardName))
-            }
+        // Link to an account whose name matches the card ("MAIB Visa" -> account "MAIB"),
+        // otherwise the default account from Settings, otherwise the only account if there is just one.
+        let accounts = try context.fetch(FetchDescriptor<Account>(sortBy: [SortDescriptor(\.createdAt)]))
+        let cardName = rawCard.lowercased()
+        let byCard = cardName.isEmpty ? nil : accounts.first {
+            let name = $0.name.lowercased()
+            return !name.isEmpty && (cardName.contains(name) || name.contains(cardName))
         }
+        entry.account = byCard
+            ?? accounts.first { $0.isDefaultForAutoLog }
+            ?? (accounts.count == 1 ? accounts.first : nil)
 
         // Put it in the first tracker that uses this category, e.g. Steam -> 🎮 Video Games.
         if category != "Other" {
@@ -85,7 +89,8 @@ struct LogExpenseIntent: AppIntent {
 
         try context.save()
         let where_ = place.isEmpty ? "" : " at \(place)"
-        return .result(dialog: "Logged \(value.currency)\(where_) as \(category).")
+        let from = entry.account.map { " from \($0.name)" } ?? " (no account matched)"
+        return .result(dialog: "Logged \(value.currency)\(where_) as \(category)\(from).")
     }
 }
 

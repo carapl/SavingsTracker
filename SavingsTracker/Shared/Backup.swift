@@ -13,6 +13,7 @@ struct BackupFile: Codable {
 
     struct AccountData: Codable {
         var name: String, kind: String, startingBalance: Decimal, createdAt: Date
+        var isDefaultForAutoLog: Bool?
     }
     struct TrackerData: Codable {
         var name: String, emoji: String, colorName: String, defaultCategory: String
@@ -28,6 +29,7 @@ struct BackupFile: Codable {
     struct EntryData: Codable {
         var amount: Decimal, kind: String, category: String, note: String, date: Date
         var isAutoLogged: Bool, account: Int?, tracker: Int?
+        var cardName: String?
     }
 }
 
@@ -51,7 +53,7 @@ enum Backup {
 
         let file = BackupFile(
             currency: Money.code,
-            accounts: accounts.map { .init(name: $0.name, kind: $0.kindRaw, startingBalance: $0.startingBalance, createdAt: $0.createdAt) },
+            accounts: accounts.map { .init(name: $0.name, kind: $0.kindRaw, startingBalance: $0.startingBalance, createdAt: $0.createdAt, isDefaultForAutoLog: $0.isDefaultForAutoLog) },
             trackers: trackers.map { .init(name: $0.name, emoji: $0.emoji, colorName: $0.colorName,
                                            defaultCategory: $0.defaultCategory, monthlyBudget: $0.monthlyBudget, createdAt: $0.createdAt) },
             goals: goals.map { goal in
@@ -63,7 +65,8 @@ enum Backup {
                 .init(amount: entry.amount, kind: entry.kindRaw, category: entry.category, note: entry.note,
                       date: entry.date, isAutoLogged: entry.isAutoLogged,
                       account: entry.account.flatMap { a in accounts.firstIndex { $0 === a } },
-                      tracker: entry.tracker.flatMap { t in trackers.firstIndex { $0 === t } })
+                      tracker: entry.tracker.flatMap { t in trackers.firstIndex { $0 === t } },
+                      cardName: entry.cardName)
             }
         )
 
@@ -127,6 +130,7 @@ enum Backup {
         let accounts = file.accounts.map { a -> Account in
             let account = Account(name: a.name, kind: AccountKind(rawValue: a.kind) ?? .other, startingBalance: a.startingBalance)
             account.createdAt = a.createdAt
+            account.isDefaultForAutoLog = a.isDefaultForAutoLog ?? false
             context.insert(account)
             return account
         }
@@ -151,6 +155,7 @@ enum Backup {
             let entry = LedgerEntry(amount: e.amount, kind: TransactionKind(rawValue: e.kind) ?? .expense,
                                     category: e.category, note: e.note, date: e.date)
             entry.isAutoLogged = e.isAutoLogged
+            entry.cardName = e.cardName ?? ""
             context.insert(entry)
             if let i = e.account, accounts.indices.contains(i) { entry.account = accounts[i] }
             if let i = e.tracker, trackers.indices.contains(i) { entry.tracker = trackers[i] }

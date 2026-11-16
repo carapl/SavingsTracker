@@ -51,9 +51,23 @@ struct TransactionsView: View {
                         ForEach(group.items) { entry in
                             Button { editing = entry } label: { EntryRow(entry: entry) }
                                 .buttonStyle(.plain)
-                        }
-                        .onDelete { offsets in
-                            for i in offsets { context.delete(group.items[i]) }
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) { context.delete(entry) } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                                .swipeActions(edge: .leading) {
+                                    Button { editing = entry } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.blue)
+                                }
+                                .contextMenu {
+                                    Button { editing = entry } label: { Label("Edit", systemImage: "pencil") }
+                                    Button(role: .destructive) { context.delete(entry) } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
                         }
                     } header: {
                         HStack {
@@ -192,6 +206,13 @@ struct EntryForm: View {
                     Text(kind == .expense
                          ? "Linking an account updates its balance. Add the expense to a tracker to follow spending on one thing, like video games."
                          : "Linking an account updates its balance.")
+                }
+
+                if let entry, entry.isAutoLogged {
+                    Section("Added automatically") {
+                        LabeledContent("Card from Wallet", value: entry.cardName.isEmpty ? "None sent" : entry.cardName)
+                        LabeledContent("Matched account", value: entry.account?.name ?? "None")
+                    }
                 }
 
                 if entry != nil {
