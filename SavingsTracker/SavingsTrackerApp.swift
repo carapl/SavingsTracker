@@ -55,6 +55,12 @@ struct ContentView: View {
                 WeeklyTipsView().toolbar { Button("Done") { router.showTips = false } }
             }
         }
+        #if DEBUG
+        // -helpTopic <id> opens that help page at launch, for checking the animations.
+        .sheet(item: Binding(get: { ContentView.debugHelpTopic }, set: { _ in ContentView.debugHelpTopic = nil })) { topic in
+            NavigationStack { HelpTopicView(topic: topic) }
+        }
+        #endif
         .fullScreenCover(isPresented: Binding(get: { !onboarded }, set: { onboarded = !$0 })) {
             OnboardingView()
                 .tint(Theme.accent(accent))
@@ -63,6 +69,14 @@ struct ContentView: View {
         .tint(Theme.accent(accent))
         .preferredColorScheme(appearance.colorScheme)
     }
+
+    #if DEBUG
+    nonisolated(unsafe) static var debugHelpTopic: HelpTopic? = {
+        let args = ProcessInfo.processInfo.arguments
+        guard let i = args.firstIndex(of: "-helpTopic"), i + 1 < args.count else { return nil }
+        return HelpContent.all.first { $0.id == args[i + 1] }
+    }()
+    #endif
 
     /// Debug builds accept `-tab N` at launch (used for README screenshots).
     private static var initialTab: Int {

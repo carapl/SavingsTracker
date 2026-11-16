@@ -90,8 +90,11 @@ struct TransactionsView: View {
             .searchable(text: $search, prompt: "Category, note or tracker")
             .navigationTitle("Activity")
             .toolbar {
-                Button { showingNew = true } label: { Image(systemName: "plus") }
-                    .accessibilityLabel("Add transaction")
+                ToolbarItem(placement: .topBarLeading) { HelpButton(related: ["add", "edit", "search"]) }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showingNew = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add transaction")
+                }
             }
             .sheet(isPresented: $showingNew) { EntryForm() }
             .sheet(item: $editing) { EntryForm(entry: $0) }

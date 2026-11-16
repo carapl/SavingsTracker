@@ -30,8 +30,11 @@ struct TrackersView: View {
             }
             .navigationTitle("Trackers")
             .toolbar {
-                Button { showingNew = true } label: { Image(systemName: "plus") }
-                    .accessibilityLabel("Add tracker")
+                ToolbarItem(placement: .topBarLeading) { HelpButton(related: ["trackers", "edit"]) }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showingNew = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add tracker")
+                }
             }
             .sheet(isPresented: $showingNew) { TrackerForm() }
         }

@@ -85,6 +85,9 @@ struct OverviewView: View {
                     Button { showSettings() } label: { Image(systemName: "gearshape") }
                         .accessibilityLabel("Settings")
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    HelpButton(related: ["tabs", "add", "tips", "plan"])
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button { showingNewEntry = true } label: { Image(systemName: "plus") }
                         .accessibilityLabel("Add transaction")

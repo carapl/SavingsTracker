@@ -37,8 +37,11 @@ struct GoalsView: View {
             }
             .navigationTitle("Goals")
             .toolbar {
-                Button { showingNew = true } label: { Image(systemName: "plus") }
-                    .accessibilityLabel("Add goal")
+                ToolbarItem(placement: .topBarLeading) { HelpButton(related: ["goals", "edit"]) }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showingNew = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add goal")
+                }
             }
             .sheet(isPresented: $showingNew) { GoalForm() }
         }

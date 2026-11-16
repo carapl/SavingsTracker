@@ -57,8 +57,11 @@ struct AccountsView: View {
             }
             .navigationTitle("Accounts")
             .toolbar {
-                Button { showingNew = true } label: { Image(systemName: "plus") }
-                    .accessibilityLabel("Add account")
+                ToolbarItem(placement: .topBarLeading) { HelpButton(related: ["accounts", "edit"]) }
+                ToolbarItem(placement: .primaryAction) {
+                    Button { showingNew = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Add account")
+                }
             }
             .sheet(isPresented: $showingNew) { AccountForm() }
             .sheet(item: $editing) { AccountForm(account: $0) }

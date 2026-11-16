@@ -218,15 +218,6 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Button {
-                        dismiss()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { onboarded = false }
-                    } label: {
-                        Label("Show Intro Again", systemImage: "sparkles")
-                    }
-                }
-
-                Section {
                     Button { choosingFile = true } label: {
                         Label("Restore from Backup…", systemImage: "arrow.counterclockwise")
                     }
