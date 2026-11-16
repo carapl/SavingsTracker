@@ -9,7 +9,7 @@ struct OverviewView: View {
     @Query(sort: \Tracker.createdAt) private var trackers: [Tracker]
 
     @State private var showingNewEntry = false
-    @State private var showingSettings = false
+    @Environment(\.showSettings) private var showSettings
 
     private var thisMonth: [LedgerEntry] {
         entries.filter { Calendar.current.isDate($0.date, equalTo: .now, toGranularity: .month) }
@@ -37,7 +37,7 @@ struct OverviewView: View {
                         HStack {
                             Stat(title: "In", value: income, color: .green)
                             Stat(title: "Out", value: spent, color: .red)
-                            Stat(title: "Saved", value: income - spent, color: income - spent >= 0 ? .accentColor : .red)
+                            Stat(title: "Saved", value: income - spent, color: income - spent >= 0 ? Theme.accent : .red)
                         }
                     }
                     .card()
@@ -73,7 +73,7 @@ struct OverviewView: View {
             .navigationTitle("Overview")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { showingSettings = true } label: { Image(systemName: "gearshape") }
+                    Button { showSettings() } label: { Image(systemName: "gearshape") }
                         .accessibilityLabel("Settings")
                 }
                 ToolbarItem(placement: .primaryAction) {
@@ -82,7 +82,6 @@ struct OverviewView: View {
                 }
             }
             .sheet(isPresented: $showingNewEntry) { EntryForm() }
-            .sheet(isPresented: $showingSettings) { SettingsView() }
         }
     }
 }

@@ -107,8 +107,8 @@ struct EntryRow: View {
         HStack(spacing: 12) {
             Image(systemName: Categories.symbol(for: entry.category))
                 .frame(width: 36, height: 36)
-                .foregroundStyle(entry.kind == .income ? .green : .accentColor)
-                .background((entry.kind == .income ? Color.green : Color.accentColor).opacity(0.15), in: Circle())
+                .foregroundStyle(entry.kind == .income ? .green : Theme.accent)
+                .background((entry.kind == .income ? Color.green : Theme.accent).opacity(0.15), in: Circle())
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.note.isEmpty ? entry.category : entry.note)

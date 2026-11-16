@@ -6,6 +6,8 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
     @AppStorage(Money.codeKey) private var currency = Money.defaultCode
+    @AppStorage(Theme.appearanceKey) private var appearance = Theme.Appearance.system
+    @AppStorage(Theme.accentKey) private var accent = "default"
     @Query(sort: \Account.createdAt) private var accounts: [Account]
 
     private var defaultAccount: Binding<Account?> {
@@ -32,6 +34,23 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Appearance") {
+                    Picker("Theme", selection: $appearance) {
+                        ForEach(Theme.Appearance.allCases) { Label($0.label, systemImage: $0.symbol).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .padding(.vertical, 4)
+                }
+
+                Section("Accent color") {
+                    AccentChooser(selection: $accent)
+                }
+
+                Section("App icon") {
+                    AppIconChooser()
+                }
+
                 Section {
                     Picker("Currency", selection: $currency) {
                         ForEach(popular, id: \.self) { Text("\(Money.name(for: $0)) (\($0))").tag($0) }

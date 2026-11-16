@@ -24,8 +24,8 @@ struct AccountsView: View {
                             HStack(spacing: 12) {
                                 Image(systemName: account.kind.symbol)
                                     .frame(width: 36, height: 36)
-                                    .foregroundStyle(Color.accentColor)
-                                    .background(Color.accentColor.opacity(0.15), in: Circle())
+                                    .foregroundStyle(Theme.accent)
+                                    .background(Theme.accent.opacity(0.15), in: Circle())
                                 VStack(alignment: .leading) {
                                     Text(account.name)
                                     Text(account.kind.label).font(.caption).foregroundStyle(.secondary)
