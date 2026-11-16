@@ -22,14 +22,6 @@ După fiecare plată cu Apple Pay, o automatizare din Shortcuts trimite plata î
 - scade suma din contul cardului cu care ai plătit;
 - o marchează cu ⚡, ca să știi ce s-a adăugat automat.
 
-**Setup (o singură dată):** Shortcuts → Automatizare → **+** → **Tranzacție** → *Orice card*, cu rulare imediată → acțiunea **Log Expense**, cu câmpurile legate așa:
-
-| Câmp | Variabilă |
-|---|---|
-| Amount | Valoare |
-| Merchant | Comerciant |
-| Card | Card sau tichet |
-
 > Merge doar cu Apple Pay (telefon sau ceas). Cu cardul fizic, automatizarea nu pornește.
 
 ## Tech
