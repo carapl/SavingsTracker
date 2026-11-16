@@ -1,14 +1,8 @@
-# Savings
+<img src="docs/hero.png" alt="Savings: Overview, Activity și Goals">
 
 O aplicație iOS simplă pentru banii tăi: vezi cât intră, cât iese, cât ai pus deoparte și pe ce se duc banii. Plățile cu Apple Pay se adaugă singure, fără să mai scrii nimic.
 
-<p align="center">
-  <img src="docs/screenshots/overview.png" width="180" alt="Overview">
-  <img src="docs/screenshots/activity.png" width="180" alt="Activity">
-  <img src="docs/screenshots/goals.png" width="180" alt="Goals">
-  <img src="docs/screenshots/trackers.png" width="180" alt="Trackers">
-  <img src="docs/screenshots/accounts.png" width="180" alt="Accounts">
-</p>
+<img src="docs/features.png" alt="Grafice, plăți automate, obiective, trackere, istoric și conturi">
 
 ## Ce poate
 
