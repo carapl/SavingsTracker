@@ -77,7 +77,7 @@ enum Palette {
 enum Categories {
     static let expense: [(name: String, symbol: String)] = [
         ("Food", "fork.knife"), ("Groceries", "cart"), ("Rent", "house"), ("Bills", "bolt"),
-        ("Transport", "car"), ("Shopping", "bag"), ("Entertainment", "tv"), ("Games", "gamecontroller"),
+        ("Transport", "car"), ("Clothes", "tshirt"), ("Shopping", "bag"), ("Entertainment", "tv"), ("Games", "gamecontroller"),
         ("Health", "heart"), ("Travel", "airplane"), ("Subscriptions", "repeat"), ("Other", "ellipsis.circle"),
     ]
     static let income: [(name: String, symbol: String)] = [

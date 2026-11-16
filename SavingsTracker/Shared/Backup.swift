@@ -14,6 +14,7 @@ struct BackupFile: Codable {
     struct AccountData: Codable {
         var name: String, kind: String, startingBalance: Decimal, createdAt: Date
         var isDefaultForAutoLog: Bool?
+        var walletCards: String?
     }
     struct TrackerData: Codable {
         var name: String, emoji: String, colorName: String, defaultCategory: String
@@ -53,7 +54,7 @@ enum Backup {
 
         let file = BackupFile(
             currency: Money.code,
-            accounts: accounts.map { .init(name: $0.name, kind: $0.kindRaw, startingBalance: $0.startingBalance, createdAt: $0.createdAt, isDefaultForAutoLog: $0.isDefaultForAutoLog) },
+            accounts: accounts.map { .init(name: $0.name, kind: $0.kindRaw, startingBalance: $0.startingBalance, createdAt: $0.createdAt, isDefaultForAutoLog: $0.isDefaultForAutoLog, walletCards: $0.walletCards) },
             trackers: trackers.map { .init(name: $0.name, emoji: $0.emoji, colorName: $0.colorName,
                                            defaultCategory: $0.defaultCategory, monthlyBudget: $0.monthlyBudget, createdAt: $0.createdAt) },
             goals: goals.map { goal in
@@ -131,6 +132,7 @@ enum Backup {
             let account = Account(name: a.name, kind: AccountKind(rawValue: a.kind) ?? .other, startingBalance: a.startingBalance)
             account.createdAt = a.createdAt
             account.isDefaultForAutoLog = a.isDefaultForAutoLog ?? false
+            account.walletCards = a.walletCards ?? ""
             context.insert(account)
             return account
         }

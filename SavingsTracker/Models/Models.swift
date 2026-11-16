@@ -38,6 +38,8 @@ final class Account {
     var createdAt: Date = Date()
     /// Receives automatic payments whose card doesn't match any account name.
     var isDefaultForAutoLog: Bool = false
+    /// Wallet card names (one per line) whose payments go to this account, linked in Settings.
+    var walletCards: String = ""
 
     @Relationship(deleteRule: .nullify, inverse: \LedgerEntry.account)
     var entries: [LedgerEntry]? = []
@@ -51,6 +53,11 @@ final class Account {
     var kind: AccountKind {
         get { AccountKind(rawValue: kindRaw) ?? .other }
         set { kindRaw = newValue.rawValue }
+    }
+
+    var walletCardList: [String] {
+        get { walletCards.split(separator: "\n").map(String.init).filter { !$0.isEmpty } }
+        set { walletCards = newValue.joined(separator: "\n") }
     }
 
     var linkedNet: Decimal { (entries ?? []).sum(\.signedAmount) }

@@ -25,6 +25,33 @@ struct SettingsView: View {
     @State private var choosingFile = false
     @State private var pendingRestore: BackupFile?
     @State private var message: String?
+    @State private var unlinkedCards = UnlinkedCards.all
+
+    private func link(_ card: String, to account: Account) {
+        for other in accounts { other.walletCardList.removeAll { $0.caseInsensitiveCompare(card) == .orderedSame } }
+        account.walletCardList.append(card)
+        // Move payments already logged with this card to the chosen account.
+        let entries = (try? context.fetch(FetchDescriptor<LedgerEntry>())) ?? []
+        for entry in entries where entry.isAutoLogged && entry.cardName.caseInsensitiveCompare(card) == .orderedSame {
+            entry.account = account
+        }
+        forget(card)
+    }
+
+    private func forget(_ card: String) {
+        UnlinkedCards.remove(card)
+        unlinkedCards = UnlinkedCards.all
+    }
+
+    /// Also picks up cards from payments logged before this list existed.
+    private func findUnlinkedCards() {
+        let entries = (try? context.fetch(FetchDescriptor<LedgerEntry>())) ?? []
+        for entry in entries where entry.isAutoLogged && !entry.cardName.isEmpty {
+            let match = CardMatcher.account(for: entry.cardName, in: accounts)
+            if match == nil || entry.account !== match { UnlinkedCards.add(entry.cardName) }
+        }
+        unlinkedCards = UnlinkedCards.all
+    }
 
     private let popular = ["MDL", "RON", "EUR", "USD", "GBP"]
     private var others: [String] {
@@ -73,6 +100,41 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    ForEach(unlinkedCards, id: \.self) { card in
+                        Menu {
+                            ForEach(accounts) { account in
+                                Button(account.name) { link(card, to: account) }
+                            }
+                        } label: {
+                            LabeledContent {
+                                Text("Link…").foregroundStyle(.tint)
+                            } label: {
+                                Label(card, systemImage: "creditcard.trianglebadge.exclamationmark")
+                            }
+                        }
+                        .swipeActions { Button("Ignore", role: .destructive) { forget(card) } }
+                    }
+                    ForEach(accounts) { account in
+                        ForEach(account.walletCardList, id: \.self) { card in
+                            LabeledContent {
+                                Text(account.name).foregroundStyle(.secondary)
+                            } label: {
+                                Label(card, systemImage: "creditcard")
+                            }
+                            .swipeActions { Button("Unlink", role: .destructive) { account.walletCardList.removeAll { $0 == card } } }
+                        }
+                    }
+                    if unlinkedCards.isEmpty && accounts.allSatisfy({ $0.walletCardList.isEmpty }) {
+                        Text("No cards yet. Pay once with Apple Pay and the card shows up here.")
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Wallet cards")
+                } footer: {
+                    Text("Cards from your Wallet automation that didn't match an account appear here. Link one to send its payments, past and future, to that account.")
+                }
+
+                Section {
                     if let backupURL {
                         ShareLink(item: backupURL) {
                             Label("Save Backup", systemImage: "externaldrive.badge.checkmark")
@@ -103,7 +165,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { Button("Done") { dismiss() } }
-            .task { prepareExports() }
+            .task { prepareExports(); findUnlinkedCards() }
             .fileImporter(isPresented: $choosingFile, allowedContentTypes: [.json]) { result in
                 do {
                     pendingRestore = try Backup.read(result.get())
