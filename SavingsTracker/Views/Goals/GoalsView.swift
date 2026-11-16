@@ -14,8 +14,7 @@ struct GoalsView: View {
                         HStack {
                             VStack(alignment: .leading) {
                                 Text("Saved toward goals").font(.subheadline).foregroundStyle(.secondary)
-                                Text(goals.sum(\.saved).currency).font(.title2.bold()).monospacedDigit()
-                                    .rollingNumber(goals.sum(\.saved))
+                                AmountText(goals.sum(\.saved)).font(.title2.bold()).monospacedDigit()
                             }
                             Spacer()
                             Text("of \(goals.sum(\.target).currency)").foregroundStyle(.secondary)
@@ -115,8 +114,7 @@ struct GoalDetailView: View {
                     .padding(.top)
 
                     VStack(spacing: 4) {
-                        Text(goal.saved.currency).font(.title.bold()).monospacedDigit()
-                            .rollingNumber(goal.saved)
+                        AmountText(goal.saved).font(.title.bold()).monospacedDigit()
                         Text("saved of \(goal.target.currency)").foregroundStyle(.secondary)
                     }
 

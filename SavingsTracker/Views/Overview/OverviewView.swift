@@ -25,8 +25,7 @@ struct OverviewView: View {
                     if !accounts.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Total balance").font(.subheadline).foregroundStyle(.secondary)
-                            Text(accounts.sum(\.balance).currency).font(.largeTitle.bold()).monospacedDigit()
-                                .rollingNumber(accounts.sum(\.balance))
+                            AmountText(accounts.sum(\.balance)).font(.largeTitle.bold()).monospacedDigit()
                             Text("Across \(accounts.count) account\(accounts.count == 1 ? "" : "s")")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
@@ -106,10 +105,9 @@ private struct Stat: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title).font(.caption).foregroundStyle(.secondary)
-            Text(value.currency)
+            AmountText(value)
                 .font(.headline).monospacedDigit()
                 .foregroundStyle(color)
-                .rollingNumber(value)
                 .lineLimit(1).minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

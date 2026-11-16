@@ -58,9 +58,41 @@ struct PressableStyle: ButtonStyle {
 extension View {
     func reveal(_ index: Int = 0) -> some View { modifier(Reveal(index: index)) }
 
-    /// Rolls the digits when an amount changes instead of swapping it instantly.
-    func rollingNumber(_ value: Decimal) -> some View {
-        contentTransition(.numericText(value: value.double))
+}
+
+/// A number that counts through the values in between when it changes (3,500 → 3,600 → … → 4,000),
+/// instead of rolling each digit on its own, which can briefly show wrong amounts.
+struct CountingText: View, Animatable {
+    var value: Double
+    let format: (Double) -> String
+
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+
+    // .identity: each in-between frame just shows the new number, without fading over the last one.
+    var body: some View { Text(format(value)).contentTransition(.identity) }
+
+    static func money(_ value: Decimal, cents: Bool = true) -> CountingText {
+        CountingText(value: value.double) {
+            $0.formatted(.currency(code: Money.code).precision(.fractionLength(cents ? 2 : 0)))
+        }
+    }
+
+    static func percent(_ value: Double) -> CountingText {
+        CountingText(value: value) { "\(Int($0.rounded()))%" }
+    }
+}
+
+/// An amount that counts to its new value whenever it changes.
+struct AmountText: View {
+    let value: Decimal
+    init(_ value: Decimal) { self.value = value }
+
+    var body: some View {
+        CountingText.money(value)
+            .monospacedDigit()
             .animation(Motion.change, value: value)
     }
 }

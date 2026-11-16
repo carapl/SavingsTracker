@@ -14,8 +14,7 @@ struct AccountsView: View {
                     Section {
                         VStack(alignment: .leading) {
                             Text("Total balance").font(.subheadline).foregroundStyle(.secondary)
-                            Text(accounts.sum(\.balance).currency).font(.title.bold()).monospacedDigit()
-                                .rollingNumber(accounts.sum(\.balance))
+                            AmountText(accounts.sum(\.balance)).font(.title.bold()).monospacedDigit()
                         }
                     }
                 }

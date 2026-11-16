@@ -38,8 +38,7 @@ private struct WeekSummaryCard: View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Spent in the last 7 days").font(.subheadline).foregroundStyle(.secondary)
-                Text(summary.thisWeek.currency).font(.largeTitle.bold()).monospacedDigit()
-                    .rollingNumber(summary.thisWeek)
+                AmountText(summary.thisWeek).font(.largeTitle.bold()).monospacedDigit()
                 if let usual = summary.usualWeek, usual > 0 {
                     let change = ((summary.thisWeek - usual) / usual).double
                     HStack(spacing: 6) {

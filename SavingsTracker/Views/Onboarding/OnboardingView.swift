@@ -301,14 +301,12 @@ struct OnboardingView: View {
                 PageTitle("Your saving plan", "How much of your income do you want to put aside?")
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .firstTextBaseline) {
-                        Text("\(Int(percent))%").font(.system(size: 48, weight: .bold, design: .rounded))
-                            .contentTransition(.numericText(value: percent))
+                        CountingText.percent(percent).font(.system(size: 48, weight: .bold, design: .rounded))
                             .animation(Motion.change, value: percent)
                         Spacer()
                         if income > 0 {
                             VStack(alignment: .trailing, spacing: 2) {
-                                Text(planned.currency).font(.headline).monospacedDigit()
-                                    .rollingNumber(planned)
+                                AmountText(planned).font(.headline).monospacedDigit()
                                 Text("a month · \((planned * 12 / 52).rounded(0).currency) a week")
                                     .font(.caption).foregroundStyle(.secondary)
                             }

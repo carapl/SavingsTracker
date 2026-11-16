@@ -269,7 +269,9 @@ private struct DemoScreen<Content: View>: View {
     var body: some View {
         content
             .frame(maxWidth: .infinity)
-            .frame(height: 250)
+            // Top-aligned: if a demo grows taller than the screen it overflows at the bottom,
+            // instead of being re-centred and jumping up.
+            .frame(height: 250, alignment: .top)
             .background(Color(.systemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 1))
@@ -298,12 +300,20 @@ private struct Looping<Phase: Equatable, Content: View>: View {
     let timing: (Phase) -> Animation
     @ViewBuilder let content: (Phase) -> Content
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Starts looping only after the page has finished sliding in, so the two motions don't mix.
+    @State private var started = false
 
     var body: some View {
         if reduceMotion {
             content(still)
-        } else {
+        } else if started {
             PhaseAnimator(phases) { phase in content(phase) } animation: { timing($0) }
+        } else {
+            content(phases[0])
+                .task {
+                    try? await Task.sleep(for: .milliseconds(700))
+                    started = true
+                }
         }
     }
 }
@@ -326,52 +336,115 @@ private struct DemoRow: View {
 }
 
 private struct TabsDemo: View {
-    private let tabs: [(String, String)] = [("Overview", "chart.pie"), ("Activity", "list.bullet"), ("Goals", "target"),
-                                            ("Trackers", "square.grid.2x2"), ("Accounts", "building.columns")]
+    private struct Row { let icon: String; let title: String; let value: String; var color: Color = .primary }
+    private struct Page { let name: String; let symbol: String; let rows: [Row] }
+
+    private var pages: [Page] {
+        func money(_ v: Decimal) -> String { v.formatted(.currency(code: Money.code).precision(.fractionLength(0))) }
+        return [
+            Page(name: "Overview", symbol: "chart.pie", rows: [
+                Row(icon: "💰", title: "Total balance", value: money(87_773)),
+                Row(icon: "📈", title: "Saved this month", value: money(8_588), color: .green),
+                Row(icon: "💡", title: "Weekly tips", value: "2 new")]),
+            Page(name: "Activity", symbol: "list.bullet", rows: [
+                Row(icon: "🛒", title: "Linella", value: "−" + money(120)),
+                Row(icon: "🍔", title: "Glovo", value: "−" + money(85)),
+                Row(icon: "💼", title: "Salary", value: "+" + money(18_500), color: .green)]),
+            Page(name: "Goals", symbol: "target", rows: [
+                Row(icon: "💻", title: "New Laptop", value: "60%"),
+                Row(icon: "🏖️", title: "Summer Trip", value: "30%"),
+                Row(icon: "🛟", title: "Emergency Fund", value: "75%")]),
+            Page(name: "Trackers", symbol: "square.grid.2x2", rows: [
+                Row(icon: "🎮", title: "Video Games", value: "\(money(480)) / \(money(600))"),
+                Row(icon: "☕️", title: "Coffee", value: "\(money(115)) / \(money(300))"),
+                Row(icon: "🎬", title: "Cinema", value: "\(money(90)) / \(money(200))")]),
+            Page(name: "Accounts", symbol: "building.columns", rows: [
+                Row(icon: "💳", title: "MAIB", value: money(62_828)),
+                Row(icon: "🏦", title: "Moldindconbank", value: money(23_500)),
+                Row(icon: "💵", title: "Cash", value: money(1_445))]),
+        ]
+    }
+
     var body: some View {
-        Looping(phases: Array(0..<5), still: 0, timing: { _ in .snappy(duration: 0.35).delay(0.9) }) { i in
-            VStack(spacing: 0) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(tabs[i].0).font(.title2.bold()).contentTransition(.opacity)
-                    ForEach(0..<3, id: \.self) { row in
-                        RoundedRectangle(cornerRadius: 8).fill(Color(.secondarySystemGroupedBackground))
-                            .frame(height: 30)
-                            .overlay(alignment: .leading) {
-                                Image(systemName: tabs[i].1).font(.caption).foregroundStyle(Theme.accent).padding(.leading, 10)
-                            }
-                            .opacity(1 - Double(row) * 0.25)
-                    }
-                }
-                .padding(16)
-                Spacer(minLength: 0)
-                HStack {
-                    ForEach(Array(tabs.enumerated()), id: \.offset) { j, tab in
-                        VStack(spacing: 2) {
-                            Image(systemName: tab.1).font(.system(size: 15))
-                            Text(tab.0).font(.system(size: 8))
+        // Goes 0 → 4 and back, so every move is one tab to the next, like tapping through them.
+        Looping(phases: [0, 1, 2, 3, 4, 3, 2, 1], still: 0,
+                // Ease in and out with no spring, so the slide never rolls back past the page.
+                timing: { _ in .timingCurve(0.65, 0, 0.35, 1, duration: 0.6).delay(1.1) }) { i in
+            GeometryReader { geo in
+                let width = geo.size.width
+                let tabWidth = (width - 20) / CGFloat(pages.count)
+                VStack(spacing: 0) {
+                    // The screens sit side by side and slide, so nothing pops in.
+                    HStack(spacing: 0) {
+                        ForEach(pages, id: \.name) { page in
+                            pageView(page).frame(width: width)
                         }
-                        .frame(maxWidth: .infinity)
-                        .foregroundStyle(i == j ? Theme.accent : .secondary)
-                        .scaleEffect(i == j ? 1.1 : 1)
                     }
+                    .frame(width: width, alignment: .leading)
+                    .offset(x: -CGFloat(i) * width)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .clipped()
+
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Theme.accent.opacity(0.18))
+                            .frame(width: tabWidth - 6, height: 40)
+                            .offset(x: CGFloat(i) * tabWidth + 3)
+                        HStack(spacing: 0) {
+                            ForEach(Array(pages.enumerated()), id: \.offset) { j, page in
+                                VStack(spacing: 2) {
+                                    Image(systemName: page.symbol).font(.system(size: 15))
+                                    Text(page.name).font(.system(size: 8))
+                                }
+                                .frame(width: tabWidth)
+                                .foregroundStyle(i == j ? Theme.accent : .secondary)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 6)
+                    .background(.bar, in: Capsule())
+                    .padding(.horizontal, 10).padding(.bottom, 10)
                 }
-                .padding(.vertical, 8)
-                .background(.bar, in: Capsule())
-                .padding(.horizontal, 10).padding(.bottom, 10)
             }
         }
+    }
+
+    private func pageView(_ page: Page) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(page.name).font(.title2.bold())
+            ForEach(page.rows, id: \.title) { row in
+                HStack(spacing: 8) {
+                    Text(row.icon).font(.footnote)
+                    Text(row.title).font(.footnote).lineLimit(1)
+                    Spacer(minLength: 6)
+                    Text(row.value).font(.footnote.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(row.color).lineLimit(1).minimumScaleFactor(0.7)
+                }
+                .padding(.horizontal, 10)
+                .frame(height: 32)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 private struct AddTransactionDemo: View {
-    enum Step: CaseIterable { case list, tapPlus, sheet, typed, tapSave, saved }
+    /// One step at a time: tap +, the form slides up, 45 is filled in, tap Save,
+    /// the form slides away, and only then the new row appears.
+    enum Step: CaseIterable { case list, tapPlus, sheet, typed, tapSave, closed, saved }
+
+    private func sheetShown(_ step: Step) -> Bool { [.sheet, .typed, .tapSave].contains(step) }
 
     var body: some View {
         Looping(phases: Step.allCases, still: .saved, timing: { step in
             switch step {
-            case .list: .easeInOut(duration: 0.3).delay(1.2)
-            case .tapPlus, .tapSave: .easeOut(duration: 0.2).delay(0.4)
-            default: .spring(duration: 0.45, bounce: 0.15).delay(0.7)
+            case .list: .easeInOut(duration: 0.3).delay(1.4)
+            case .tapPlus, .tapSave: .easeOut(duration: 0.15).delay(0.45)
+            case .sheet, .closed: .timingCurve(0.3, 0, 0.2, 1, duration: 0.45).delay(0.25)
+            case .typed: .linear(duration: 0.05).delay(0.5)
+            case .saved: .spring(duration: 0.45, bounce: 0.15).delay(0.15)
             }
         }) { step in
             ZStack(alignment: .top) {
@@ -393,7 +466,7 @@ private struct AddTransactionDemo: View {
                 }
                 .padding(16)
 
-                if [.sheet, .typed, .tapSave].contains(step) {
+                if sheetShown(step) {
                     VStack(spacing: 10) {
                         Capsule().fill(Color.secondary.opacity(0.4)).frame(width: 36, height: 4)
                         HStack {
@@ -405,9 +478,13 @@ private struct AddTransactionDemo: View {
                         HStack {
                             Text("Amount")
                             Spacer()
-                            Text(step == .sheet ? "0" : "45").font(.title3.bold().monospacedDigit())
-                                .contentTransition(.numericText())
+                            // Not animated: 45 appears instantly in place, but it still slides in and out with the form.
+                            let typed = step == .sheet ? "0" : "45"
+                            Text(typed)
+                                .font(.title3.bold().monospacedDigit())
                                 .foregroundStyle(step == .sheet ? .secondary : .primary)
+                                .contentTransition(.identity)
+                                .animation(nil, value: typed)
                         }
                         .padding(10).background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 10))
                         HStack {
@@ -420,10 +497,15 @@ private struct AddTransactionDemo: View {
                     }
                     .padding(14)
                     .background(Color(.secondarySystemGroupedBackground), in: UnevenRoundedRectangle(topLeadingRadius: 18, topTrailingRadius: 18))
+                    .shadow(color: .black.opacity(0.12), radius: 10, y: -2)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .transition(.move(edge: .bottom))
+                    // Stays above the list while it slides away, instead of dropping behind it.
+                    .zIndex(1)
                 }
             }
+            // Always fill the screen from the top, so the list doesn't jump when the form opens or a row is added.
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
     }
 }
@@ -466,11 +548,10 @@ private struct SwipeDemo: View {
 private struct GoalDemo: View {
     private let target: Decimal = 10_000
     var body: some View {
-        Looping(phases: [Decimal(3_000), 3_500, 5_000, 7_500], still: 5_000, timing: { _ in .spring(duration: 0.7, bounce: 0.2).delay(0.9) }) { saved in
+        Looping(phases: [Decimal(3_000), 3_500, 5_000, 7_500], still: 5_000, timing: { _ in .timingCurve(0.65, 0, 0.35, 1, duration: 0.7).delay(0.9) }) { saved in
             VStack(spacing: 14) {
                 Text("💻").font(.system(size: 44))
-                Text(saved.currency).font(.title.bold().monospacedDigit())
-                    .contentTransition(.numericText(value: saved.double))
+                CountingText.money(saved, cents: false).font(.title.bold().monospacedDigit())
                 Text("saved of \(target.currency)").font(.subheadline).foregroundStyle(.secondary)
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
@@ -495,7 +576,7 @@ private struct GoalDemo: View {
 private struct TrackerDemo: View {
     private let budget: Decimal = 600
     var body: some View {
-        Looping(phases: [Decimal(150), 380, 520, 690], still: 520, timing: { _ in .spring(duration: 0.6).delay(0.9) }) { spent in
+        Looping(phases: [Decimal(150), 380, 520, 690], still: 520, timing: { _ in .timingCurve(0.65, 0, 0.35, 1, duration: 0.7).delay(0.9) }) { spent in
             let over = spent > budget
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 12) {
@@ -505,8 +586,7 @@ private struct TrackerDemo: View {
                         Text("Budget \(budget.currency) a month").font(.caption).foregroundStyle(.secondary)
                     }
                 }
-                Text(spent.currency).font(.title.bold().monospacedDigit())
-                    .contentTransition(.numericText(value: spent.double))
+                CountingText.money(spent, cents: false).font(.title.bold().monospacedDigit())
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color(.tertiarySystemFill))
@@ -531,51 +611,89 @@ private struct TipsDemo: View {
         Tip(id: "2", tone: .warning, symbol: "fork.knife", title: "Food jumped", message: "More than usual this week."),
         Tip(id: "3", tone: .good, symbol: "checkmark.seal", title: "💻 Laptop on track", message: "Keep saving the same each week."),
     ]
+    @State private var shown = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        Looping(phases: Array(0...3), still: 3, timing: { n in .spring(duration: 0.45, bounce: 0.2).delay(n == 3 ? 1.6 : 0.6) }) { shown in
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Weekly tips", systemImage: "lightbulb.fill").font(.headline)
-                ForEach(Array(tips.prefix(shown).enumerated()), id: \.element.id) { _, tip in
-                    TipRow(tip: tip, compact: true)
-                        .padding(10)
-                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-                Spacer(minLength: 0)
+        // Plays once: the tips arrive one by one, then stay on screen.
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Weekly tips", systemImage: "lightbulb.fill").font(.headline)
+            ForEach(tips.prefix(shown)) { tip in
+                TipRow(tip: tip, compact: true)
+                    .padding(10)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            .padding(16)
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .task {
+            guard shown == 0 else { return }
+            if reduceMotion { shown = tips.count; return }
+            try? await Task.sleep(for: .milliseconds(700))
+            for n in 1...tips.count {
+                withAnimation(.spring(duration: 0.45, bounce: 0.2)) { shown = n }
+                try? await Task.sleep(for: .milliseconds(550))
+            }
         }
     }
 }
 
 private struct PlanDemo: View {
-    private let income: Decimal = 15_000
     var body: some View {
-        Looping(phases: [10, 20, 30, 20], still: 20, timing: { _ in .spring(duration: 0.6).delay(0.9) }) { percent in
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Save each month").font(.headline)
-                HStack(alignment: .firstTextBaseline) {
-                    Text("\(percent)%").font(.system(size: 44, weight: .bold, design: .rounded))
-                        .contentTransition(.numericText(value: Double(percent)))
-                    Spacer()
-                    Text((income * Decimal(percent) / 100).currency).font(.headline.monospacedDigit())
-                        .contentTransition(.numericText(value: Double(percent)))
-                }
-                GeometryReader { geo in
-                    let x = geo.size.width * CGFloat(percent - 5) / 45
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color(.tertiarySystemFill)).frame(height: 6)
-                        Capsule().fill(Theme.accent).frame(width: x, height: 6)
-                        Circle().fill(.white).shadow(radius: 2).frame(width: 26, height: 26)
-                            .overlay(Touch(pressed: true).opacity(0.8))
-                            .offset(x: x - 13)
-                    }
-                    .frame(maxHeight: .infinity)
-                }
-                .frame(height: 30)
-                Text("of \(income.currency) income").font(.caption).foregroundStyle(.secondary)
-            }
-            .padding(20)
+        Looping(phases: [10.0, 20, 30, 20], still: 20, timing: { _ in .timingCurve(0.65, 0, 0.35, 1, duration: 0.7).delay(1.0) }) { percent in
+            PlanFigure(percent: percent)
         }
+    }
+}
+
+/// Percent, amount and slider all come from one animated value, so they always move together.
+private struct PlanFigure: View, Animatable {
+    var percent: Double
+    private let income: Decimal = 15_000
+
+    var animatableData: Double {
+        get { percent }
+        set { percent = newValue }
+    }
+
+    var body: some View {
+        let amount = (income.double * percent / 100).rounded()
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Save each month").font(.headline)
+            HStack(alignment: .firstTextBaseline) {
+                Text("\(Int(percent.rounded()))%").font(.system(size: 44, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                Spacer()
+                Text(amount.formatted(.currency(code: Money.code).precision(.fractionLength(0))))
+                    .font(.headline.monospacedDigit())
+            }
+            .contentTransition(.identity)
+            // The whole bar is your income; the filled part is the share you save,
+            // so 20% fills exactly a fifth of it.
+            GeometryReader { geo in
+                let x = geo.size.width * CGFloat(percent) / 100
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color(.tertiarySystemFill)).frame(height: 8)
+                    Capsule().fill(Theme.accent).frame(width: x, height: 8)
+                    Circle().fill(.white).shadow(radius: 2).frame(width: 26, height: 26)
+                        .overlay(Touch(pressed: true).opacity(0.8))
+                        .offset(x: x - 13)
+                }
+                .frame(maxHeight: .infinity)
+            }
+            .frame(height: 30)
+            HStack {
+                Text("Saved").foregroundStyle(Theme.accent)
+                Spacer()
+                Text("Your income: \(income.formatted(.currency(code: Money.code).precision(.fractionLength(0))))")
+                    .foregroundStyle(.secondary)
+            }
+            .font(.caption)
+        }
+        .padding(20)
+        // This view already receives every in-between value; animating the bar again on top
+        // would make it trail behind the numbers.
+        .transaction { $0.animation = nil }
     }
 }

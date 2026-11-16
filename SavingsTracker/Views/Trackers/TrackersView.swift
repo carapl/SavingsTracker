@@ -90,8 +90,7 @@ struct TrackerDetailView: View {
                         EmojiBadge(emoji: tracker.emoji, color: color, size: 56)
                         VStack(alignment: .leading) {
                             Text("This month").font(.subheadline).foregroundStyle(.secondary)
-                            Text(month.currency).font(.title.bold()).monospacedDigit()
-                                .rollingNumber(month)
+                            AmountText(month).font(.title.bold()).monospacedDigit()
                         }
                     }
                     if let budget = tracker.monthlyBudget, budget > 0 {
